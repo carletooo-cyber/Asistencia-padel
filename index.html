@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alineación · Escuela de pádel</title>
+<style>
+  :root{
+    --bg: #17181C;
+    --bg-raise: #1F2126;
+    --paper: #EFEDE6;
+    --ink: #EFEDE6;
+    --ink-dim: #9A9C9E;
+    --line: #34363C;
+    --ball: #D7F23D;
+    --ball-dim: rgba(215,242,61,.15);
+    --out: #E8563E;
+    --out-dim: rgba(232,86,62,.15);
+    --presente: #3FBF63;
+    --presente-dim: rgba(63,191,99,.15);
+    --ausente: #E5484D;
+    --ausente-dim: rgba(229,72,77,.15);
+    --radius: 6px;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{ height:100%; margin:0; }
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size:15px;
+  }
+  #app{
+    max-width: 480px;
+    margin:0 auto;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  header.top{
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  header.top .crumbs{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:13px;
+    color: var(--ink-dim);
+    margin-bottom:10px;
+  }
+  header.top .crumbs button{
+    background:none; border:none; color: var(--ink-dim);
+    font-size:13px; cursor:pointer; padding:0; font-family:inherit;
+  }
+  header.top h1{
+    font-weight: 800;
+    font-size: 28px;
+    margin:0;
+    line-height:1.1;
+  }
+  header.top .sub{
+    color: var(--ink-dim);
+    font-size:13.5px;
+    margin-top:4px;
+  }
+
+  main{ flex:1; padding: 18px 20px 100px; }
+
+  .roster{ border-top: 1px solid var(--line); }
+  .roster-row{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    border-bottom: 1px solid var(--line);
+  }
+  .roster-row .tap{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex:1;
+    min-width:0;
+    padding: 15px 2px;
+    cursor:pointer;
+    background:none; border:none; text-align:left; color: var(--ink); font-family:inherit;
+  }
+  .roster-row .num{
+    font-weight:700; color: var(--ink-dim); font-size:13px; width:22px; flex-shrink:0;
+  }
+  .roster-row .main{ flex:1; min-width:0; }
+  .roster-row .name{ font-size:16px; font-weight:600; }
+  .roster-row .meta{ color: var(--ink-dim); font-size:12.5px; margin-top:2px; }
+  .roster-row .pill{
+    font-size:11.5px; color: var(--bg); background: var(--ball);
+    padding:3px 8px; border-radius: 999px; font-weight:700; flex-shrink:0;
+  }
+  .row-actions{ display:flex; align-items:center; gap:2px; flex-shrink:0; }
+  .icon-btn{
+    background:none; border:none; color: var(--ink-dim); font-size:15px;
+    padding: 8px 7px; cursor:pointer;
+  }
+  .icon-btn.danger{ color: var(--out); }
+
+  .add-row{
+    display:flex; align-items:center; gap:8px; padding: 15px 2px;
+    color: var(--ink-dim); background:none; border:none; width:100%;
+    text-align:left; cursor:pointer; font-size:15px; font-family:inherit;
+  }
+  .add-row .plus{
+    width:20px; height:20px; border:1px solid var(--ink-dim);
+    border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px;
+  }
+
+  .empty{ color: var(--ink-dim); font-size:14px; padding: 20px 2px; }
+
+  .date-row{
+    display:flex; align-items:center; gap:8px; padding-bottom:14px;
+    border-bottom:1px solid var(--line); margin-bottom: 6px; flex-wrap:wrap;
+  }
+  .date-row input[type="date"]{
+    background: var(--bg-raise); border: 1px solid var(--line); color: var(--ink);
+    padding: 9px 10px; border-radius: var(--radius); font-size:14px; font-family:inherit; flex:1; color-scheme: dark; min-width:120px;
+  }
+  .quick-action{
+    background:none; border:1px solid var(--line); color: var(--ink-dim);
+    padding: 9px 8px; border-radius: var(--radius); font-size:12px; cursor:pointer; font-family:inherit;
+  }
+  .conexion-badge{
+    font-size:11px; padding:4px 8px; border-radius:999px; font-weight:700;
+    display:flex; align-items:center; gap:5px; width:100%; margin-top:-4px; margin-bottom:8px;
+  }
+  .conexion-badge.ok{ color: var(--presente); }
+  .conexion-badge.mal{ color: var(--out); }
+  .conexion-badge i{ width:7px; height:7px; border-radius:50%; background:currentColor; display:inline-block; }
+
+  .lineup-row{
+    display:flex; align-items:center; gap:12px; padding: 13px 0; border-bottom: 1px solid var(--line);
+  }
+  .lineup-row .num{ font-weight:700; font-size:13px; color: var(--ink-dim); width:20px; }
+  .lineup-row .info{ flex:1; min-width:0; cursor:pointer; }
+  .lineup-row .sname{ font-size:15.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lineup-row .dots{ display:flex; gap:4px; margin-top:6px; align-items:center; }
+  .lineup-row .dot{ width:7px; height:7px; border-radius:50%; background: var(--line); }
+  .lineup-row .dot.si{ background: var(--presente); }
+  .lineup-row .dot.no{ background: var(--ausente); }
+
+  .state-btn{
+    flex-shrink:0; min-width: 100px; padding: 9px 4px; border-radius: var(--radius);
+    border: 1px solid var(--line); background: transparent; color: var(--ink-dim);
+    font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; text-align:center;
+  }
+  .state-btn.sin-marcar{ background: var(--bg-raise); border-color: var(--line); color: var(--ink-dim); }
+  .state-btn.presente{ background: var(--presente-dim); border-color: var(--presente); color: var(--presente); }
+  .state-btn.ausente{ background: var(--ausente-dim); border-color: var(--ausente); color: var(--ausente); }
+
+  .remove-x{ background:none; border:none; color: var(--ink-dim); font-size:16px; cursor:pointer; padding:0; margin-left:4px; }
+
+  .save-bar{
+    position: fixed; bottom:0; left:0; right:0; display:flex; justify-content:center;
+    padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, transparent, var(--bg) 35%);
+  }
+  .save-bar-inner{ max-width:440px; width:100%; }
+  .save-btn{
+    width:100%; padding:15px; background: var(--ball); color: var(--bg);
+    border:none; border-radius: var(--radius); font-size:15.5px; font-weight:700; cursor:pointer; font-family:inherit;
+  }
+  .save-btn:disabled{ opacity:.6; cursor:default; }
+  .save-note{ text-align:center; font-size:12.5px; color: var(--ball); margin-top:8px; min-height:16px; }
+
+  dialog{
+    border:none; border-radius: 8px; padding:0; width: calc(100% - 48px); max-width: 380px;
+    background: var(--bg-raise); color: var(--ink);
+  }
+  dialog::backdrop{ background: rgba(0,0,0,.7); }
+  .dialog-inner{ padding:22px; }
+  .dialog-inner h3{ margin:0 0 16px; font-size:18px; }
+  .dialog-inner input, .dialog-inner select{
+    width:100%; padding:11px 12px; border-radius: var(--radius); border:1px solid var(--line);
+    background: var(--bg); color: var(--ink); font-size:15px; font-family:inherit; margin-bottom:12px;
+  }
+  .dialog-inner label{ display:block; font-size:12.5px; color: var(--ink-dim); margin-bottom:6px; }
+  .dialog-actions{ display:flex; gap:10px; margin-top:8px; }
+  .dialog-actions button{
+    flex:1; padding:11px; border-radius: var(--radius); border:none;
+    font-size:14px; cursor:pointer; font-family:inherit; font-weight:600;
+  }
+  .dialog-actions .cancel{ background: var(--line); color: var(--ink); }
+  .dialog-actions .confirm{ background: var(--ball); color: var(--bg); }
+
+  .tabs{ display:flex; border: 1px solid var(--line); border-radius: var(--radius); overflow:hidden; margin-bottom:16px; }
+  .tabs button{
+    flex:1; padding:10px 6px; background: none; border:none; color: var(--ink-dim);
+    font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit;
+  }
+  .tabs button.activa{ background: var(--ball); color: var(--bg); }
+
+  .day-heading{ font-weight:700; font-size:13px; color: var(--ink-dim); text-transform:uppercase; letter-spacing: 0.05em; padding: 16px 2px 6px; }
+  .day-heading.hoy{ color: var(--ball); }
+
+  .cal-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .cal-nav button{ background:none; border:1px solid var(--line); color: var(--ink); width:32px; height:32px; border-radius: var(--radius); cursor:pointer; }
+  .cal-grid{ display:grid; grid-template-columns: repeat(7, 1fr); gap:5px; }
+  .cal-dow{ text-align:center; font-size:11px; color: var(--ink-dim); padding-bottom:4px; font-weight:600; }
+  .cal-cell{
+    aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+    font-size:12.5px; border-radius: 5px; background: var(--bg); border: 1px solid var(--line); color: var(--ink-dim);
+  }
+  .cal-cell.vacia{ border:none; background:none; }
+  .cal-cell.si{ background: var(--presente-dim); border-color: var(--presente); color: var(--presente); font-weight:700; }
+  .cal-cell.no{ background: var(--ausente-dim); border-color: var(--ausente); color: var(--ausente); font-weight:700; }
+  .cal-cell.futura{ background: var(--bg-raise); border-style: dashed; border-color: var(--line); color: var(--ink-dim); opacity: 0.7; }
+
+  .cal-legend{ display:flex; gap:16px; margin-top:16px; font-size:12px; color: var(--ink-dim); flex-wrap: wrap;}
+  .cal-legend span{ display:flex; align-items:center; gap:6px; }
+  .cal-legend i{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+
+  .loading{ text-align:center; padding:60px 20px; color: var(--ink-dim); }
+  .error-box{ text-align:center; padding:40px 20px; color: var(--out); }
+  .error-box button{ margin-top:14px; background:var(--ball); color:var(--bg); border:none; padding:10px 16px; border-radius:var(--radius); font-weight:700; cursor:pointer; }
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">Cargando…</div></div>
+
+<dialog id="dlgProfesor">
+  <div class="dialog-inner">
+    <h3>Nuevo profesor</h3>
+    <input id="inpProfesorNombre" placeholder="Nombre y apellido" />
+    <div class="dialog-actions">
+      <button class="cancel" onclick="document.getElementById('dlgProfesor').close()">Cancelar</button>
+      <button class="confirm" onclick="crearProfesor()">Añadir</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlgGrupo">
+  <div class="dialog-inner">
+    <h3 id="tituloDlgGrupo">Nuevo grupo</h3>
+    <input id="inpGrupoNombre" placeholder="Ej. Grupo Nivel Medio" />
+    <label for="selGrupoDia">Día de la semana</label>
+    <select id="selGrupoDia">
+      <option value="Lunes">Lunes</option>
+      <option value="Martes">Martes</option>
+      <option value="Miércoles">Miércoles</option>
+      <option value="Jueves">Jueves</option>
+      <option value="Viernes">Viernes</option>
+      <option value="Sábado">Sábado</option>
+      <option value="Domingo">Domingo</option>
+    </select>
+    <input id="inpGrupoHorario" placeholder="Hora (ej. 18:00)" />
+    <div class="dialog-actions">
+      <button class="cancel" onclick="document.getElementById('dlgGrupo').close()">Cancelar</button>
+      <button class="confirm" id="btnConfirmDlgGrupo" onclick="guardarGrupoDialog()">Crear</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlgAlumno">
+  <div class="dialog-inner">
+    <h3 id="tituloDlgAlumno">Nuevo alumno</h3>
+    <input id="inpAlumnoNombre" placeholder="Nombre del alumno" />
+    <div class="dialog-actions">
+      <button class="cancel" onclick="document.getElementById('dlgAlumno').close()">Cancelar</button>
+      <button class="confirm" id="btnConfirmDlgAlumno" onclick="guardarAlumnoDialog()">Añadir</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlgConfirmar">
+  <div class="dialog-inner">
+    <h3>Confirmar</h3>
+    <p id="confirmMensaje" style="color:var(--ink-dim); font-size:14.5px; line-height:1.4; margin:0 0 18px;"></p>
+    <div class="dialog-actions">
+      <button class="cancel" id="confirmCancelar">Cancelar</button>
+      <button class="confirm" id="confirmOk">Eliminar</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlgCalendario">
+  <div class="dialog-inner">
+    <h3 id="tituloCalendario">Alumno</h3>
+    <div class="cal-nav">
+      <button onclick="cambiarMesCalendario(-1)">‹</button>
+      <span class="mes-label" id="mesCalendarioLabel"></span>
+      <button onclick="cambiarMesCalendario(1)">›</button>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-dow">L</div><div class="cal-dow">M</div><div class="cal-dow">X</div>
+      <div class="cal-dow">J</div><div class="cal-dow">V</div><div class="cal-dow">S</div><div class="cal-dow">D</div>
+    </div>
+    <div class="cal-grid" id="gridCalendario" style="margin-top:4px;"></div>
+    <div class="cal-legend">
+      <span><i style="background:var(--presente)"></i>Asistió</span>
+      <span><i style="background:var(--ausente)"></i>Faltó</span>
+      <span><i style="background:var(--bg-raise); border: 1px solid var(--line);"></i>Futura</span>
+    </div>
+    <div class="dialog-actions" style="margin-top:18px;">
+      <button class="cancel" onclick="document.getElementById('dlgCalendario').close()">Cerrar</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- SDK de Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDeWcml4euFnCejXl9TflC9RJ10hs196YE",
+  authDomain: "asistencia-padel.firebaseapp.com",
+  projectId: "asistencia-padel",
+  storageBucket: "asistencia-padel.firebasestorage.app",
+  messagingSenderId: "380129950065",
+  appId: "1:380129950065:web:f6c7a3e7838468db819ed0"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+db.enablePersistence().catch(function(err) {
+  console.log("No se pudo habilitar la persistencia offline:", err);
+});
+
+const COLECCION = 'padel';
+
+let profesores = [];
+let grupos = [];
+let asistenciasCache = {};
+let profesorActualId = null;
+let grupoActualId = null;
+let fechaSeleccionada = todayISO();
+let esModoIncrustado = false;
+let errorCarga = false;
+let ultimoErrorStorage = null;
+let conectado = true;
+let sucioAsistencia = false;
+
+function todayISO(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function uid(){
+  if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+const DIAS_SEMANA = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const DIAS_LABORABLES = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+
+function obtenerNombreDiaISO(isoFecha){
+  const partes = isoFecha.split('-');
+  const date = new Date(partes[0], partes[1] - 1, partes[2]);
+  return DIAS_SEMANA[date.getDay()];
+}
+
+let vistaGrupos = 'hoy';
+let vistaCoordinador = 'calendario';
+
+function docRef(id){ return db.collection(COLECCION).doc(id); }
+
+async function leerDoc(id){
+  try{
+    const snap = await docRef(id).get();
+    conectado = true;
+    if(!snap.exists) return null;
+    const data = snap.data();
+    return data && data.json ? JSON.parse(data.json) : null;
+  }catch(e){
+    conectado = false;
+    ultimoErrorStorage = (e && e.message) ? e.message : String(e);
+    return null;
+  }
+}
+async function escribirDoc(id, valor){
+  try{
+    await docRef(id).set({json: JSON.stringify(valor), actualizado: firebase.firestore.FieldValue.serverTimestamp()});
+    conectado = true;
+    return true;
+  }catch(e){
+    conectado = false;
+    ultimoErrorStorage = (e && e.message) ? e.message : String(e);
+    return false;
+  }
+}
+
+async function guardarProfesores(){ return escribirDoc('profesores', profesores); }
+async function guardarGrupos(){ return escribirDoc('grupos', grupos); }
+async function cargarAsistencia(grupoId){
+  const datos = await leerDoc('asistencia_'+grupoId);
+  asistenciasCache[grupoId] = datos || {};
+  return asistenciasCache[grupoId];
+}
+async function guardarAsistencia(grupoId){
+  const ok = await escribirDoc('asistencia_'+grupoId, asistenciasCache[grupoId]);
+  if(ok) sucioAsistencia = false;
+  return ok;
+}
+
+let unsubProfesores = null;
+let unsubGrupos = null;
+let unsubAsistenciaActual = null;
+let idGrupoSuscrito = null;
+
+function iniciarEscuchaProfesoresYGrupos(){
+  if(unsubProfesores) unsubProfesores();
+  if(unsubGrupos) unsubGrupos();
+
+  unsubProfesores = docRef('profesores').onSnapshot(snap=>{
+    conectado = true;
+    if(snap.exists){
+      const data = snap.data();
+      profesores = (data && data.json) ? JSON.parse(data.json) : [];
+      render();
+    }
+  }, err=>{ conectado = false; ultimoErrorStorage = err.message; render(); });
+
+  unsubGrupos = docRef('grupos').onSnapshot(snap=>{
+    conectado = true;
+    if(snap.exists){
+      const data = snap.data();
+      grupos = (data && data.json) ? JSON.parse(data.json) : [];
+      render();
+    }
+  }, err=>{ conectado = false; ultimoErrorStorage = err.message; render(); });
+}
+
+function escucharAsistenciaDeGrupo(grupoId){
+  if(unsubAsistenciaActual && idGrupoSuscrito === grupoId) return;
+  if(unsubAsistenciaActual) unsubAsistenciaActual();
+  idGrupoSuscrito = grupoId;
+  unsubAsistenciaActual = docRef('asistencia_'+grupoId).onSnapshot(snap=>{
+    conectado = true;
+    if(sucioAsistencia) return;
+    const data = snap.exists ? snap.data() : null;
+    asistenciasCache[grupoId] = (data && data.json) ? JSON.parse(data.json) : {};
+    if(grupoActualId === grupoId) renderAlumnos();
+  }, err=>{ conectado = false; ultimoErrorStorage = err.message; });
+}
+function detenerEscuchaAsistencia(){
+  if(unsubAsistenciaActual){ unsubAsistenciaActual(); unsubAsistenciaActual = null; idGrupoSuscrito = null; }
+}
+
+async function cargarDatos(){
+  errorCarga = false;
+  app.innerHTML = '<div class="loading">Cargando…</div>';
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const pIdParam = urlParams.get('p');
+
+  const [p, g] = await Promise.all([leerDoc('profesores'), leerDoc('grupos')]);
+  if(p === null && g === null && !conectado){
+    errorCarga = true;
+    render();
+    return;
+  }
+  profesores = p || [];
+  grupos = g || [];
+
+  if(pIdParam){
+    const profExiste = profesores.find(prof => prof.id === pIdParam);
+    if(profExiste){
+      profesorActualId = pIdParam;
+      esModoIncrustado = true;
+    }
+  }
+
+  render();
+  iniciarEscuchaProfesoresYGrupos();
+}
+
+function mostrarAviso(msg, esError){
+  const note = document.getElementById('saveNote');
+  if(!note) return;
+  note.textContent = msg;
+  note.style.color = esError ? 'var(--out)' : 'var(--ball)';
+  setTimeout(()=>{ if(note) note.textContent=''; }, 2500);
+}
+
+function confirmarAccion(mensaje, textoBtn = 'Eliminar', colorBtn = 'var(--out)'){
+  return new Promise(resolve=>{
+    const dlg = document.getElementById('dlgConfirmar');
+    document.getElementById('confirmMensaje').textContent = mensaje;
+
+    const btnOk = document.getElementById('confirmOk');
+    btnOk.textContent = textoBtn;
+    btnOk.style.background = colorBtn;
+    btnOk.style.color = colorBtn === 'var(--ball)' ? 'var(--bg)' : '#fff';
+
+    const btnCancel = document.getElementById('confirmCancelar');
+    function limpiar(){ dlg.close(); btnOk.removeEventListener('click', onOk); btnCancel.removeEventListener('click', onCancel); }
+    function onOk(){ limpiar(); resolve(true); }
+    function onCancel(){ limpiar(); resolve(false); }
+    btnOk.addEventListener('click', onOk);
+    btnCancel.addEventListener('click', onCancel);
+    dlg.showModal();
+  });
+}
+
+const app = document.getElementById('app');
+function render(){
+  if(errorCarga){ renderError(); return; }
+
+  if(!profesorActualId){ detenerEscuchaAsistencia(); renderSelectProfesor(); }
+  else if(profesorActualId === 'COORDINADOR') { detenerEscuchaAsistencia(); renderCoordinador(); }
+  else if(!grupoActualId){ detenerEscuchaAsistencia(); renderGrupos(); }
+  else renderGrupoDetalle();
+}
+
+function renderError(){
+  app.innerHTML = `
+    <div class="error-box">
+      <p>No se han podido cargar los datos.</p>
+      <p style="font-size:12px; color:var(--ink-dim); margin-top:8px;">Detalle técnico: ${escapeHtml(ultimoErrorStorage || 'desconocido')}</p>
+      <button onclick="cargarDatos()">Reintentar</button>
+    </div>
+  `;
+}
+
+function badgeConexion(){
+  return `<div class="conexion-badge ${conectado ? 'ok' : 'mal'}"><i></i>${conectado ? 'Sincronizado' : 'Modo Offline (Se guardará al tener conexión)'}</div>`;
+}
+
+function renderSelectProfesor(){
+  app.innerHTML = `
+    <header class="top">
+      <div class="crumbs"><span>Panel de Control</span></div>
+      <h1>¿Quién pasa lista?</h1>
+      <div class="sub">Elige tu nombre o accede a la vista global</div>
+    </header>
+    <main>
+      ${badgeConexion()}
+      <button class="save-btn" style="margin-bottom: 24px; background: var(--bg-raise); border: 1px solid var(--line); color: var(--ink);" onclick="abrirCoordinador()">👑 Vista Coordinador</button>
+      <div class="roster" id="listaProfesores"></div>
+    </main>
+  `;
+  const cont = document.getElementById('listaProfesores');
+  if(profesores.length===0){ cont.innerHTML = '<div class="empty">No hay profesores guardados.</div>'; }
+  profesores.forEach((p,i)=>{
+    const row = document.createElement('div');
+    row.className = 'roster-row';
+    row.innerHTML = `
+      <button class="tap">
+        <span class="num">${String(i+1).padStart(2,'0')}</span>
+        <span class="main"><div class="name">${escapeHtml(p.nombre)}</div></span>
+        <span class="arrow">›</span>
+      </button>
+      <div class="row-actions">
+        <button class="icon-btn link-btn" title="Copiar enlace para este profesor">🔗</button>
+        <button class="icon-btn danger" title="Eliminar">✕</button>
+      </div>
+    `;
+    row.querySelector('.tap').onclick = ()=>{ profesorActualId = p.id; render(); };
+    row.querySelector('.link-btn').onclick = (e)=>{ e.stopPropagation(); copiarEnlaceProfesor(p.id); };
+    row.querySelector('.danger').onclick = (e)=>{ e.stopPropagation(); eliminarProfesor(p.id); };
+    cont.appendChild(row);
+  });
+  const addRow = document.createElement('button');
+  addRow.className = 'add-row';
+  addRow.innerHTML = `<span class="plus">+</span><span>Añadir profesor</span>`;
+  addRow.onclick = abrirDialogoProfesor;
+  cont.appendChild(addRow);
+}
+
+function abrirCoordinador() {
+  profesorActualId = 'COORDINADOR';
+  grupoActualId = null;
+  render();
+}
+
+function renderCoordinador() {
+  app.innerHTML = `
+    <header class="top">
+      <div class="crumbs"><button onclick="cambiarProfesor()">‹ Volver</button></div>
+      <h1>Panel de Coordinador</h1>
+    </header>
+    <main>
+      ${badgeConexion()}
+      <div class="tabs">
+        <button class="${vistaCoordinador==='calendario' ? 'activa':''}" onclick="cambiarVistaCoordinador('calendario')">📅 Calendario Global</button>
+        <button class="${vistaCoordinador==='alumnos' ? 'activa':''}" onclick="cambiarVistaCoordinador('alumnos')">👥 Alumnado</button>
+      </div>
+      <div id="coordinadorContenido"></div>
+    </main>
+  `;
+  if(vistaCoordinador === 'calendario') renderCalendarioGlobal();
+  else renderDirectorioAlumnos();
+}
+
+function cambiarVistaCoordinador(vista) {
+  vistaCoordinador = vista;
+  renderCoordinador();
+}
+
+function renderCalendarioGlobal() {
+  const cont = document.getElementById('coordinadorContenido');
+  const diaSemana = obtenerNombreDiaISO(fechaSeleccionada);
+
+  let html = `
+    <div class="date-row">
+      <input type="date" id="inpFechaCoord" value="${fechaSeleccionada}" />
+    </div>
+    <div class="day-heading hoy">Clases programadas (${diaSemana})</div>
+    <div class="roster">
+  `;
+
+  let clasesHoy = grupos.filter(g => g.dia === diaSemana);
+
+  if(clasesHoy.length === 0) {
+      html += `<div class="empty">No hay clases para este día.</div>`;
+  } else {
+      clasesHoy.sort((a,b) => (a.horario || '').localeCompare(b.horario || ''));
+      clasesHoy.forEach((g, i) => {
+          const prof = profesores.find(p => p.id === g.profesorId);
+          const profNombre = prof ? prof.nombre : 'Sin profesor';
+          html += `
+            <div class="roster-row" style="padding:12px 2px;">
+              <span class="num">${String(i+1).padStart(2,'0')}</span>
+              <div class="main">
+                <div class="name">${escapeHtml(g.nombre)}</div>
+                <div class="meta" style="color:var(--ball)">⏱ ${escapeHtml(g.horario || 'Sin hora')} · 🎾 ${escapeHtml(profNombre)}</div>
+              </div>
+              <span class="pill" style="background:var(--bg-raise); color:var(--ink);">${g.alumnos.length} alu.</span>
+            </div>
+          `;
+      });
+  }
+  html += `</div>`;
+  cont.innerHTML = html;
+  document.getElementById('inpFechaCoord').onchange = (e)=>{
+    fechaSeleccionada = e.target.value;
+    renderCalendarioGlobal();
+  };
+}
+
+async function cargarTodasAsistencias() {
+  const promesas = grupos.map(g => {
+      if(!asistenciasCache[g.id]) return cargarAsistencia(g.id);
+      return Promise.resolve();
+  });
+  await Promise.all(promesas);
+}
+
+async function renderDirectorioAlumnos() {
+  const cont = document.getElementById('coordinadorContenido');
+  cont.innerHTML = '<div class="loading">Cargando métricas...</div>';
+
+  await cargarTodasAsistencias();
+
+  let html = '';
+  const hoyStr = todayISO();
+
+  if(grupos.length === 0) {
+      cont.innerHTML = '<div class="empty">No hay grupos creados en la escuela.</div>';
+      return;
+  }
+
+  grupos.forEach(g => {
+      const prof = profesores.find(p => p.id === g.profesorId);
+      html += `<div class="day-heading" style="margin-top:16px; border-bottom:1px solid var(--line); padding-bottom:6px;">
+                  🎾 ${escapeHtml(g.nombre)} <span style="font-weight:normal; text-transform:none; color:var(--ink-dim);">(${prof?prof.nombre:'-'})</span>
+               </div>`;
+
+      if(g.alumnos.length === 0) {
+          html += `<div class="empty" style="padding:10px 2px;">Grupo sin alumnos</div>`;
+      } else {
+          g.alumnos.forEach((a, i) => {
+            let asistencias = 0;
+            let faltas = 0;
+
+            const regGrupo = asistenciasCache[g.id] || {};
+            Object.keys(regGrupo).forEach(fecha => {
+                if(fecha <= hoyStr) {
+                    const estado = regGrupo[fecha][a.id];
+                    if(estado === true) asistencias++;
+                    if(estado === false) faltas++;
+                }
+            });
+
+            html += `
+              <div class="roster-row" style="padding:12px 2px; cursor:pointer;" onclick="abrirCalendarioAlumno('${a.id}', '${g.id}')">
+                <span class="num" style="width:16px;">${i+1}</span>
+                <div class="main">
+                  <div class="name" style="font-size:15px;">${escapeHtml(a.nombre)}</div>
+                  <div class="meta" style="font-size:11px;">Ver historial de calendario</div>
+                </div>
+                <div style="font-size:13px; font-weight:bold; display:flex; gap:12px; text-align:right;">
+                    <span style="color:var(--presente);" title="Asistencias">✓ ${asistencias}</span>
+                    <span style="color:var(--ausente);" title="Faltas">✕ ${faltas}</span>
+                </div>
+              </div>
+            `;
+          });
+      }
+  });
+
+  cont.innerHTML = html;
+}
+
+function copiarEnlaceProfesor(idProfesor){
+  const urlBase = window.location.href.split('?')[0];
+  const enlace = `${urlBase}?p=${encodeURIComponent(idProfesor)}`;
+  navigator.clipboard.writeText(enlace).then(()=>{
+    alert('¡Enlace copiado al portapapeles! Puedes enviárselo al profesor.');
+  }).catch(()=>{
+    prompt('Copia este enlace para el profesor:', enlace);
+  });
+}
+
+function crearFilaGrupo(g, i){
+  const row = document.createElement('div');
+  row.className = 'roster-row';
+  row.innerHTML = `
+    <button class="tap">
+      <span class="num">${String(i+1).padStart(2,'0')}</span>
+      <span class="main">
+        <div class="name">${escapeHtml(g.nombre)}</div>
+        <div class="meta">${escapeHtml(g.dia || 'Sin día')}${g.horario ? ' · ' + escapeHtml(g.horario) : ''}</div>
+      </span>
+      <span class="pill">${g.alumnos.length}</span>
+    </button>
+    <div class="row-actions">
+      <button class="icon-btn" title="Editar">✎</button>
+      <button class="icon-btn danger" title="Eliminar">✕</button>
+    </div>
+  `;
+  row.querySelector('.tap').onclick = ()=>{ grupoActualId = g.id; render(); };
+  row.querySelector('.icon-btn:not(.danger)').onclick = ()=> abrirDialogoGrupo(g);
+  row.querySelector('.danger').onclick = ()=> eliminarGrupo(g.id);
+  return row;
+}
+
+function renderGrupos(){
+  const profesor = profesores.find(p=>p.id===profesorActualId);
+  const misGrupos = grupos.filter(g=>g.profesorId===profesorActualId);
+
+  const diaSemanaFecha = obtenerNombreDiaISO(fechaSeleccionada);
+
+  app.innerHTML = `
+    <header class="top">
+      <div class="crumbs">
+        <span>Escuela de pádel</span>
+        ${!esModoIncrustado ? '<button onclick="cambiarProfesor()">Cambiar profesor</button>' : ''}
+      </div>
+      <h1>${escapeHtml(profesor ? profesor.nombre : '')}</h1>
+      <div class="sub">Tus grupos de clase</div>
+    </header>
+    <main>
+      ${badgeConexion()}
+      <div class="date-row">
+        <input type="date" id="inpFechaGrupos" value="${fechaSeleccionada}" />
+      </div>
+      <div class="tabs">
+        <button id="tabHoy" class="${vistaGrupos==='hoy' ? 'activa':''}">Clases del día (${diaSemanaFecha})</button>
+        <button id="tabSemana" class="${vistaGrupos==='semana' ? 'activa':''}">Todas las clases</button>
+      </div>
+      <div class="roster" id="listaGrupos"></div>
+    </main>
+  `;
+
+  document.getElementById('inpFechaGrupos').onchange = (e)=>{
+    fechaSeleccionada = e.target.value;
+    renderGrupos();
+  };
+
+  document.getElementById('tabHoy').onclick = ()=>{ vistaGrupos='hoy'; renderGrupos(); };
+  document.getElementById('tabSemana').onclick = ()=>{ vistaGrupos='semana'; renderGrupos(); };
+
+  const cont = document.getElementById('listaGrupos');
+
+  if(vistaGrupos === 'hoy'){
+    const gruposHoy = misGrupos.filter(g=>g.dia===diaSemanaFecha);
+    if(gruposHoy.length===0){
+      cont.innerHTML = `<div class="empty">No tienes clases asignadas para los ${diaSemanaFecha}s.</div>`;
+    } else {
+      gruposHoy.forEach((g,i)=> cont.appendChild(crearFilaGrupo(g,i)));
+    }
+  } else {
+    DIAS_LABORABLES.forEach(dia=>{
+      const gruposDia = misGrupos.filter(g=>g.dia===dia);
+      if(gruposDia.length > 0){
+        const heading = document.createElement('div');
+        heading.className = 'day-heading' + (dia===diaSemanaFecha ? ' hoy' : '');
+        heading.textContent = dia;
+        cont.appendChild(heading);
+        gruposDia.forEach((g,i)=> cont.appendChild(crearFilaGrupo(g,i)));
+      }
+    });
+    if(misGrupos.length===0){
+      cont.innerHTML = `<div class="empty">No hay grupos creados para este profesor.</div>`;
+    }
+  }
+
+  const addRow = document.createElement('button');
+  addRow.className = 'add-row';
+  addRow.innerHTML = `<span class="plus">+</span><span>Crear grupo</span>`;
+  addRow.onclick = ()=> abrirDialogoGrupo();
+  cont.appendChild(addRow);
+}
+
+async function renderGrupoDetalle(){
+  const grupo = grupos.find(g=>g.id===grupoActualId);
+  if(!grupo){ grupoActualId=null; render(); return; }
+
+  app.innerHTML = `
+    <header class="top">
+      <div class="crumbs"><button onclick="volverAGrupos()">‹ Mis grupos</button></div>
+      <h1>${escapeHtml(grupo.nombre)}</h1>
+      <div class="sub">${escapeHtml(grupo.dia || '')}${grupo.horario ? ' · ' + escapeHtml(grupo.horario) : ''}</div>
+    </header>
+    <main>
+      ${badgeConexion()}
+      <div class="date-row">
+        <input type="date" id="inpFecha" value="${fechaSeleccionada}" />
+        <button class="quick-action" id="btnTodosAusentes">Todos ausentes</button>
+        <button class="quick-action" id="btnTodosPresentes">Todos presentes</button>
+      </div>
+      <div class="lineup" id="listaAlumnos">${'<div class="loading">Cargando…</div>'}</div>
+      <button class="add-row" onclick="abrirDialogoAlumno()"><span class="plus">+</span><span>Añadir alumno</span></button>
+    </main>
+    <div class="save-bar"><div class="save-bar-inner">
+      <button class="save-btn" id="btnGuardarAsistencia" onclick="guardarListaDelDia()">Guardar asistencia</button>
+      <div class="save-note" id="saveNote"></div>
+    </div></div>
+  `;
+  document.getElementById('inpFecha').onchange = (e)=>{ fechaSeleccionada = e.target.value; renderAlumnos(); };
+  document.getElementById('btnTodosAusentes').onclick = marcarTodosAusentes;
+  document.getElementById('btnTodosPresentes').onclick = marcarTodosPresentes;
+  if(!asistenciasCache[grupo.id]) await cargarAsistencia(grupo.id);
+  escucharAsistenciaDeGrupo(grupo.id);
+  renderAlumnos();
+}
+
+function historialDots(grupoId, alumnoId){
+  const datos = asistenciasCache[grupoId] || {};
+  const fechas = Object.keys(datos).sort().reverse().slice(0,6).reverse();
+  if(fechas.length === 0) return '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+  return fechas.map(f=>{
+    const val = datos[f] ? datos[f][alumnoId] : undefined;
+    const cls = val === true ? 'si' : (val === false ? 'no' : '');
+    return `<span class="dot ${cls}"></span>`;
+  }).join('');
+}
+
+function renderAlumnos(){
+  const grupo = grupos.find(g=>g.id===grupoActualId);
+  if(!grupo) return;
+  const cont = document.getElementById('listaAlumnos');
+  if(!cont) return;
+  const registro = (asistenciasCache[grupo.id] && asistenciasCache[grupo.id][fechaSeleccionada]) || {};
+
+  cont.innerHTML = '';
+  if(grupo.alumnos.length===0){
+    cont.innerHTML = '<div class="empty">No hay alumnos en este grupo.</div>';
+    return;
+  }
+
+  grupo.alumnos.forEach((a,i)=>{
+    const estado = registro[a.id];
+    let textoBtn = 'Sin marcar';
+    let claseBtn = 'sin-marcar';
+
+    if(estado === true){ textoBtn = 'Presente'; claseBtn = 'presente'; }
+    else if(estado === false){ textoBtn = 'Ausente'; claseBtn = 'ausente'; }
+
+    const row = document.createElement('div');
+    row.className = 'lineup-row';
+    row.innerHTML = `
+      <span class="num">${String(i+1).padStart(2,'0')}</span>
+      <div class="info" title="Ver calendario">
+        <div class="sname">${escapeHtml(a.nombre)}</div>
+        <div class="dots">${historialDots(grupo.id, a.id)}</div>
+      </div>
+      <button class="state-btn ${claseBtn}">${textoBtn}</button>
+      <button class="icon-btn" title="Editar Nombre" onclick="abrirDialogoAlumno('${a.id}')">✎</button>
+      <button class="remove-x" title="Quitar alumno del grupo">✕</button>
+    `;
+    row.querySelector('.info').onclick = ()=> abrirCalendarioAlumno(a.id, grupo.id);
+
+    row.querySelector('.state-btn').onclick = ()=>{
+      if(!asistenciasCache[grupo.id]) asistenciasCache[grupo.id] = {};
+      if(!asistenciasCache[grupo.id][fechaSeleccionada]) asistenciasCache[grupo.id][fechaSeleccionada] = {};
+      const actual = asistenciasCache[grupo.id][fechaSeleccionada][a.id];
+
+      if(actual === undefined) asistenciasCache[grupo.id][fechaSeleccionada][a.id] = true;
+      else if(actual === true) asistenciasCache[grupo.id][fechaSeleccionada][a.id] = false;
+      else delete asistenciasCache[grupo.id][fechaSeleccionada][a.id];
+
+      sucioAsistencia = true;
+      renderAlumnos();
+      document.getElementById('saveNote').textContent = 'Cambios sin guardar';
+      document.getElementById('saveNote').style.color = 'var(--ink-dim)';
+    };
+    row.querySelector('.remove-x').onclick = ()=> quitarAlumno(a.id);
+    cont.appendChild(row);
+  });
+}
+
+async function marcarTodosAusentes(){
+  const confirmado = await confirmarAccion('¿Marcar a todos como ausentes hoy? Sobrescribirá las marcas actuales.', 'Aceptar', 'var(--ball)');
+  if(!confirmado) return;
+  const grupo = grupos.find(g=>g.id===grupoActualId);
+  if(!asistenciasCache[grupo.id]) asistenciasCache[grupo.id] = {};
+  if(!asistenciasCache[grupo.id][fechaSeleccionada]) asistenciasCache[grupo.id][fechaSeleccionada] = {};
+  const registro = asistenciasCache[grupo.id][fechaSeleccionada];
+  grupo.alumnos.forEach(a=> registro[a.id] = false);
+  sucioAsistencia = true;
+  renderAlumnos();
+}
+
+async function marcarTodosPresentes(){
+  const confirmado = await confirmarAccion('¿Marcar a todos como presentes hoy? Sobrescribirá las marcas actuales.', 'Aceptar', 'var(--ball)');
+  if(!confirmado) return;
+  const grupo = grupos.find(g=>g.id===grupoActualId);
+  if(!asistenciasCache[grupo.id]) asistenciasCache[grupo.id] = {};
+  if(!asistenciasCache[grupo.id][fechaSeleccionada]) asistenciasCache[grupo.id][fechaSeleccionada] = {};
+  const registro = asistenciasCache[grupo.id][fechaSeleccionada];
+  grupo.alumnos.forEach(a=> registro[a.id] = true);
+  sucioAsistencia = true;
+  renderAlumnos();
+}
+
+async function guardarListaDelDia(){
+  const grupo = grupos.find(g=>g.id===grupoActualId);
+  const btn = document.getElementById('btnGuardarAsistencia');
+  if(btn) btn.disabled = true;
+  const ok = await guardarAsistencia(grupo.id);
+  if(btn) btn.disabled = false;
+  mostrarAviso(ok ? 'Asistencia guardada ✓' : ('Error al guardar: ' + (ultimoErrorStorage || 'desconocido')), !ok);
+}
+
+function cambiarProfesor(){ profesorActualId=null; grupoActualId=null; render(); }
+function volverAGrupos(){ grupoActualId=null; render(); }
+
+function abrirDialogoProfesor(){
+  document.getElementById('inpProfesorNombre').value='';
+  document.getElementById('dlgProfesor').showModal();
+}
+async function crearProfesor(){
+  const nombre = document.getElementById('inpProfesorNombre').value.trim();
+  if(!nombre) return;
+  profesores.push({id: uid(), nombre});
+  document.getElementById('dlgProfesor').close();
+  render();
+  const ok = await guardarProfesores();
+  if(!ok) alert('No se ha podido guardar el profesor.');
+}
+async function eliminarProfesor(profesorId){
+  const profesor = profesores.find(p=>p.id===profesorId);
+  if(!profesor) return;
+  const confirmado = await confirmarAccion(`¿Eliminar al profesor "${profesor.nombre}"? También se eliminarán sus grupos.`);
+  if(!confirmado) return;
+  grupos = grupos.filter(g=>g.profesorId!==profesorId);
+  profesores = profesores.filter(p=>p.id!==profesorId);
+  render();
+  await guardarProfesores();
+  await guardarGrupos();
+}
+
+let editandoGrupoId = null;
+function abrirDialogoGrupo(grupo){
+  editandoGrupoId = grupo ? grupo.id : null;
+  document.getElementById('inpGrupoNombre').value = grupo ? grupo.nombre : '';
+  document.getElementById('selGrupoDia').value = grupo && grupo.dia ? grupo.dia : obtenerNombreDiaISO(fechaSeleccionada);
+  document.getElementById('inpGrupoHorario').value = grupo ? (grupo.horario || '') : '';
+  document.getElementById('tituloDlgGrupo').textContent = grupo ? 'Editar grupo' : 'Nuevo grupo';
+  document.getElementById('btnConfirmDlgGrupo').textContent = grupo ? 'Guardar' : 'Crear';
+  document.getElementById('dlgGrupo').showModal();
+}
+async function guardarGrupoDialog(){
+  const nombre = document.getElementById('inpGrupoNombre').value.trim();
+  const dia = document.getElementById('selGrupoDia').value;
+  const horario = document.getElementById('inpGrupoHorario').value.trim();
+  if(!nombre) return;
+  if(editandoGrupoId){
+    const grupo = grupos.find(g=>g.id===editandoGrupoId);
+    if(grupo){ grupo.nombre = nombre; grupo.dia = dia; grupo.horario = horario; }
+  } else {
+    grupos.push({id: uid(), nombre, dia, horario, profesorId: profesorActualId, alumnos: []});
+  }
+  document.getElementById('dlgGrupo').close();
+  render();
+  const ok = await guardarGrupos();
+  if(!ok) alert('Error al guardar grupo.');
+}
+
+async function eliminarGrupo(grupoId){
+  const grupo = grupos.find(g=>g.id===grupoId);
+  if(!grupo) return;
+  const confirmado = await confirmarAccion(`¿Eliminar el grupo "${grupo.nombre}"?`);
+  if(!confirmado) return;
+  grupos = grupos.filter(g=>g.id!==grupoId);
+  render();
+  await guardarGrupos();
+}
+
+let editandoAlumnoId = null;
+function abrirDialogoAlumno(alumnoId = null){
+  editandoAlumnoId = alumnoId;
+  const grupo = grupos.find(g=>g.id===grupoActualId);
+  const alumno = alumnoId && grupo ? grupo.alumnos.find(a=>a.id===alumnoId) : null;
+
+  document.getElementById('inpAlumnoNombre').value = alumno ? alumno.nombre : '';
+  document.getElementById('tituloDlgAlumno').textContent = alumno ? 'Editar alumno' : 'Nuevo alumno';
+  document.getElementById('btnConfirmDlgAlumno').textContent = alumno ? 'Guardar' : 'Añadir';
+  document.getElementById('dlgAlumno').showModal();
+}
+
+async function guardarAlumnoDialog(){
+  const nombre = document.getElementById('inpAlumnoNombre').value.trim();
+  if(!nombre) return;
+  const grupo = grupos.find(g=>g.id===grupoActualId);
+
+  if(editandoAlumnoId) {
+    const alumno = grupo.alumnos.find(a=>a.id===editandoAlumnoId);
+    if(alumno) alumno.nombre = nombre;
+  } else {
+    grupo.alumnos.push({id: uid(), nombre});
+  }
+
+  document.getElementById('dlgAlumno').close();
+  renderAlumnos();
+  const ok = await guardarGrupos();
+  if(!ok) alert('Error al guardar alumno.');
+}
+
+async function quitarAlumno(alumnoId){
+  const confirmado = await confirmarAccion(`¿Eliminar a este alumno del grupo?`);
+  if(!confirmado) return;
+  const grupo = grupos.find(g=>g.id===grupoActualId);
+  grupo.alumnos = grupo.alumnos.filter(a=>a.id!==alumnoId);
+  renderAlumnos();
+  await guardarGrupos();
+}
+
+let calAlumnoId = null;
+let calGrupoId = null;
+let calFecha = new Date();
+
+function abrirCalendarioAlumno(alumnoId, grupoId){
+  calAlumnoId = alumnoId; calGrupoId = grupoId; calFecha = new Date();
+  renderCalendario();
+  document.getElementById('dlgCalendario').showModal();
+}
+
+function cambiarMesCalendario(delta){
+  calFecha = new Date(calFecha.getFullYear(), calFecha.getMonth()+delta, 1);
+  renderCalendario();
+}
+
+function renderCalendario(){
+  const grupo = grupos.find(g=>g.id===calGrupoId);
+  const alumno = grupo ? grupo.alumnos.find(a=>a.id===calAlumnoId) : null;
+  document.getElementById('tituloCalendario').textContent = alumno ? alumno.nombre : 'Alumno';
+
+  const year = calFecha.getFullYear();
+  const month = calFecha.getMonth();
+  document.getElementById('mesCalendarioLabel').textContent = calFecha.toLocaleDateString('es-ES', {month:'long', year:'numeric'});
+
+  const primerDiaMes = new Date(year, month, 1).getDay();
+  const offsetLunes = (primerDiaMes + 6) % 7;
+  const diasEnMes = new Date(year, month+1, 0).getDate();
+  const datos = asistenciasCache[calGrupoId] || {};
+
+  const idxDiaClase = DIAS_SEMANA.indexOf(grupo ? grupo.dia : null);
+  const hoyISO = todayISO();
+
+  let html = '';
+  for(let i=0; i<offsetLunes; i++) html += '<div class="cal-cell vacia"></div>';
+
+  for(let d=1; d<=diasEnMes; d++){
+    const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const reg = datos[iso];
+    let cls = 'cal-cell';
+
+    const esDiaDeClase = new Date(year, month, d).getDay() === idxDiaClase;
+
+    if(reg && calAlumnoId in reg && reg[calAlumnoId] !== undefined) {
+       cls += reg[calAlumnoId] ? ' si' : ' no';
+    } else if(esDiaDeClase && iso > hoyISO) {
+       cls += ' futura';
+    }
+
+    html += `<div class="${cls}">${d}</div>`;
+  }
+  document.getElementById('gridCalendario').innerHTML = html;
+}
+
+cargarDatos();
+</script>
+</body>
+</html>
